@@ -1,0 +1,9 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: upload-limit
+  namespace: default
+spec:
+  buffering:
+    maxRequestBodyBytes: 0 # 0 means unlimited
+    maxResponseBodyBytes: 0

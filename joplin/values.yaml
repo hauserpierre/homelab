@@ -1,0 +1,59 @@
+joplin:
+  image:
+    repository: joplin/server
+    tag: 2.14.2 # pin versions in production
+    pullPolicy: IfNotPresent
+
+
+  replicaCount: 1
+
+
+  env:
+    APP_BASE_URL: "http://<NODE_IP>:32230" # replace with one of your node IPs
+    DB_CLIENT: pg
+    DB_HOST: joplin-postgres
+    DB_PORT: 5432
+    DB_DATABASE: joplin
+    DB_USER: joplin
+    # DB_PASSWORD is loaded from the joplin-secret Secret (see joplin-secret.yaml)
+
+
+  service:
+    type: NodePort
+    port: 22300
+    nodePort: 32230
+
+
+postgres:
+  image:
+    repository: postgres
+    tag: 15-alpine
+
+
+  auth:
+    database: joplin
+    username: joplin
+    # password is loaded from the joplin-secret Secret (see joplin-secret.yaml)
+
+
+  persistence:
+    enabled: true
+    storageClass: "longhorn"
+  accessModes:
+    - ReadWriteOnce
+  size: 10Gi
+
+
+resources:
+  joplin:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+postgres:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 512Mi

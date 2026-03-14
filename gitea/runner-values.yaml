@@ -1,0 +1,70 @@
+enabled: true
+
+giteaRootURL: http://gitea-http.gitea.svc.cluster.local:3000
+
+existingSecret: gitea-actions-token
+existingSecretKey: token
+
+statefulset:
+  replicas: 2
+  timezone: Etc/UTC
+
+  labels:
+    runner: pi
+    arch: arm64
+
+  nodeSelector:
+    kubernetes.io/arch: arm64
+
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "256Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+
+  dind:
+    repository: ""
+    tag: ""
+    pullPolicy: Never
+    extraVolumeMounts: []
+
+  actRunner:
+    registry: docker.gitea.com
+    repository: act_runner
+    tag: 0.2.13
+    pullPolicy: IfNotPresent
+
+    extraVolumeMounts:
+      # ✅ Use host container runtime socket
+      - name: containerd-sock
+        mountPath: /run/containerd/containerd.sock
+
+    extraEnvs:
+      - name: CONTAINERD_ADDRESS
+        value: /run/containerd/containerd.sock
+
+    config: |
+      log:
+        level: info
+
+      runner:
+        labels:
+          - pi
+          - arm64
+
+      container:
+        require_docker: false
+
+      cache:
+        enabled: false
+
+  extraVolumes:
+    - name: containerd-sock
+      hostPath:
+        path: /run/containerd/containerd.sock
+        type: Socket
+
+  persistence:
+    size: 1Gi

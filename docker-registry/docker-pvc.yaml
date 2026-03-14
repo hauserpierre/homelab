@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: registry-pvc
+  namespace: registry
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 20Gi
+
+#patch volume before reinstall: DATA
+#kubectl patch pv pvc-f544bc01-41f8-4451-8ca7-e5b75a2a7d48 --type json -p '[{"op": "remove", "path": "/spec/claimRef/uid"}]'

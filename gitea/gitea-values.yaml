@@ -1,0 +1,52 @@
+replicaCount: 1
+
+image:
+  tag: 1.22     # ARM-compatible
+
+service:
+  http:
+    type: ClusterIP
+    port: 3000
+  ssh:
+    type: ClusterIP
+    port: 22
+
+ingress:
+  enabled: true
+  className: traefik
+  hosts:
+    - host: gitea.cluster
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: [] # Add later if you want certs
+
+persistence:
+  enabled: true
+  size: 20Gi
+  storageClass: "longhorn"
+
+valkey-cluster:
+  enabled: false
+valkey:
+  enabled: true
+postgresql:
+  enabled: true
+  auth:
+    username: gitea
+    database: gitea
+    existingSecret: gitea-postgres-secret
+    secretKeys:
+      userPasswordKey: password
+postgresql-ha:
+  enabled: false
+
+gitea:
+  admin:
+    existingSecret: gitea-admin-secret
+  config:
+    database:
+      DB_TYPE: postgres
+    indexer:
+      ISSUE_INDEXER_TYPE: bleve
+      REPO_INDEXER_ENABLED: true

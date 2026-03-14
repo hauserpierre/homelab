@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitea-act-runner
+  namespace: gitea
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: gitea-act-runner
+  template:
+    metadata:
+      labels:
+        app: gitea-act-runner
+    spec:
+      nodeSelector:
+        kubernetes.io/arch: arm64
+      containers:
+        - name: act-runner
+          image: 192.168.1.17:30000/act-runner-arm64:latest
+          imagePullPolicy: Always
+          env:
+            - name: GITEA_INSTANCE_URL
+              value: http://gitea-http.gitea.svc.cluster.local:3000
+            - name: GITEA_RUNNER_REGISTRATION_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: gitea-actions-token
+                  key: token
+            - name: CONFIG_FILE
+              value: /config/config.yaml
+            - name: PATH
+              value: /usr/local/bin:/usr/bin:/bin   # ensure buildctl is in PATH
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: containerd-sock
+              mountPath: /run/containerd/containerd.sock
+              readOnly: true
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+      volumes:
+        - name: containerd-sock
+          hostPath:
+            path: /run/k3s/containerd/containerd.sock
+            type: Socket
+        - name: config
+          configMap:
+            name: gitea-runner-config

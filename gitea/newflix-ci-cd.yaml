@@ -1,0 +1,67 @@
+name: Build & Push ARM Images For Newflix
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-backend:
+    runs-on: pi
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup registry auth
+        run: |
+          mkdir -p /kaniko/.docker
+          cat <<EOF > /kaniko/.docker/config.json
+          {
+            "auths": {
+              "${{ secrets.REGISTRY_URL }}": {
+                "auth": "$(echo -n "${{ secrets.REGISTRY_USER }}:${{ secrets.REGISTRY_PASSWORD }}" | base64)"
+              }
+            }
+          }
+          EOF
+
+      - name: Build & push backend-service (ARM64)
+        uses: gcr.io/kaniko-project/executor:latest
+        with:
+          args: >
+            --context=backend-service
+            --dockerfile=backend-service/Dockerfile
+            --destination=${{ secrets.REGISTRY_URL }}/backend-service:1.0.0-SNAPSHOT
+            --platform=linux/arm64
+            --cache=true
+
+  build-web:
+    runs-on: pi
+    needs: build-backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup registry auth
+        run: |
+          mkdir -p /kaniko/.docker
+          cat <<EOF > /kaniko/.docker/config.json
+          {
+            "auths": {
+              "${{ secrets.REGISTRY_URL }}": {
+                "auth": "$(echo -n "${{ secrets.REGISTRY_USER }}:${{ secrets.REGISTRY_PASSWORD }}" | base64)"
+              }
+            }
+          }
+          EOF
+
+      - name: Build & push web (ARM64)
+        uses: gcr.io/kaniko-project/executor:latest
+        with:
+          args: >
+            --context=web
+            --dockerfile=web/Dockerfile
+            --destination=${{ secrets.REGISTRY_URL }}/web:1.0.0-SNAPSHOT
+            --platform=linux/arm64
+            --cache=true

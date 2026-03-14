@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      securityContext:
+        {}
+      containers:
+        - name: postgres-container
+          securityContext:
+            {}
+          image: "tensorchord/vchord-postgres:pg14-v0.4.3"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: postgres-port
+              containerPort: 5432
+              protocol: TCP
+          livenessProbe:
+            null
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - test -w /var/lib/postgresql
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+          resources:
+            {}
+          env:
+            - name: POSTGRES_DB
+              value: immich
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: immich-secret
+                  key: db-username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: immich-secret
+                  key: db-password
+
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: pg-data
+              subPath: postgres
+              readOnly: false
+      volumes:
+        - name: pg-data
+          persistentVolumeClaim:
+            claimName: immich-postgres-pvc

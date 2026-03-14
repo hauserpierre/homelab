@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: joplin-server
+  namespace: joplin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: joplin-server
+  template:
+    metadata:
+      labels:
+        app: joplin-server
+    spec:
+      containers:
+      - name: joplin
+        image: joplin/server:3.5.1
+        ports:
+        - containerPort: 22300
+        env:
+        - name: APP_BASE_URL
+          value: "http://<NODE_IP>:32230" # replace with one of your node IPs
+        - name: DB_CLIENT
+          value: pg
+        - name: POSTGRES_HOST
+          value: joplin-postgres
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_DATABASE
+          value: joplin
+        - name: POSTGRES_USER
+          value: joplin
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: joplin-secret
+              key: db-password
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            memory: 512Mi
