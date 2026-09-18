@@ -1,0 +1,8 @@
+# Local state: contains sensitive data (rendered values, secrets), never committed.
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+.terraform/
+crash.log
+*.tfvars
+!*.tfvars.example

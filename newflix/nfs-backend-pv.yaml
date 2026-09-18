@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: newflix-backend-nfs-pv
+spec:
+  capacity:
+    storage: 4000Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-cluster
+  nfs:
+    server: ${NFS_SERVER_IP}
+    path: /media/DATA/newflix-backend-service-pvc-pvc-a76e1e45-388b-4420-9dd9-6ee2dd346903
+  claimRef:
+    namespace: newflix
+    name: backend-service-pvc

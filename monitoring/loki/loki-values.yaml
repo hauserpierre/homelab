@@ -1,0 +1,101 @@
+# ------------------------------------------------------------------------------
+# Loki: log storage and indexing
+# Helm chart: grafana/loki
+#
+# Mode: single-binary (1 pod, suited for home cluster)
+# Backend: filesystem via Longhorn PVC (no S3 needed)
+# ARM64 compatible
+# ------------------------------------------------------------------------------
+
+# Required in chart v6+ to actually deploy the single-binary StatefulSet.
+# Without this the chart creates nothing (no pod, no PVC).
+deploymentMode: SingleBinary
+
+loki:
+  auth_enabled: false   # No multi-tenancy on a personal cluster
+
+  commonConfig:
+    replication_factor: 1   # No HA needed
+
+  storage:
+    type: filesystem
+
+  schemaConfig:
+    configs:
+      - from: "2024-01-01"
+        store: tsdb
+        object_store: filesystem
+        schema: v13
+        index:
+          prefix: loki_index_
+          period: 24h
+
+  limits_config:
+    # Required for the native OTLP ingestion endpoint used by the
+    # OpenTelemetry Collector (labels arrive as structured metadata)
+    allow_structured_metadata: true
+    retention_period: 744h    # 31 days of logs
+    ingestion_rate_mb: 8
+    ingestion_burst_size_mb: 16
+    # Cap labels per stream to avoid cardinality explosion
+    max_label_names_per_series: 30
+
+# --- Single-binary mode ---
+singleBinary:
+  replicas: 1
+  persistence:
+    enabled: true
+    storageClass: nfs-cluster
+    size: 20Gi
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 50m
+    limits:
+      memory: 512Mi
+
+# Disable distributed-mode components (incompatible with single-binary)
+backend:
+  replicas: 0
+read:
+  replicas: 0
+write:
+  replicas: 0
+
+# Disable all caches: the default chunks-cache requests 9830Mi (memcached),
+# which exceeds the capacity of a single Raspberry Pi node (3.8Gi).
+memcached:
+  enabled: false
+memcachedExporter:
+  enabled: false
+chunksCache:
+  enabled: false
+resultsCache:
+  enabled: false
+
+# Disable nginx gateway (direct access from Promtail and Grafana)
+gateway:
+  enabled: false
+
+# Disable canary (top-level key in chart v6)
+lokiCanary:
+  enabled: false
+
+# Disable built-in self-monitoring
+monitoring:
+  selfMonitoring:
+    enabled: false
+    grafanaAgent:
+      installOperator: false
+  lokiCanary:
+    enabled: false
+  dashboards:
+    enabled: false
+  rules:
+    enabled: false
+  serviceMonitor:
+    enabled: false
+
+# Disable the post-install test pod
+test:
+  enabled: false

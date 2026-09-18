@@ -24,7 +24,7 @@ kubectl apply -f postgres-deployment.yaml -n immich
 
 # install packaged helm chart
 
-helm install immich immich-0.10.1.tgz -f values.yaml -n immich
+helm install immich immich-0.11.1.tgz -f values.yaml -n immich
 
 # Change server service to have NodePort 
 
@@ -34,4 +34,3 @@ kubectl apply -f immich-service-nodeport.yaml
 
 sed "s/SELECT pg_catalog.set_config('search_path', '', false);/SELECT pg_catalog.set_config('search_path', 'public, pg_catalog', true);/g" backup-immich-last.sql \
 | psql --dbname=immich --username=admin
-

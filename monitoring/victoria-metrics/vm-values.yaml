@@ -1,0 +1,159 @@
+# ------------------------------------------------------------------------------
+# VictoriaMetrics K8s Stack
+# Helm chart: vm/victoria-metrics-k8s-stack
+#
+# Bundles: VMSingle, vmagent, node-exporter, kube-state-metrics, Grafana
+# ARM64 compatible: all images ship multi-arch
+# ------------------------------------------------------------------------------
+
+fullnameOverride: vm
+
+# --- Operator: admission webhooks ---
+# Webhooks validate CRD configs before applying (useful in prod), but cause a
+# chicken-and-egg failure on first install: the operator pod isn't ready yet
+# when Helm tries to create VMSingle/VMAgent/VMRule resources.
+victoria-metrics-operator:
+  admissionWebhooks:
+    enabled: false
+
+# --- VMSingle: metrics database ---
+vmsingle:
+  enabled: true
+  spec:
+    retentionPeriod: "3"    # 3 months
+    extraArgs:
+      # Reduce cache allocation to 40% of the memory limit, leaving more
+      # headroom for the Go runtime. Default 60% caused OOMKill at 512Mi.
+      memory.allowedPercent: "40"
+    storage:
+      # nolock variant: VictoriaMetrics takes a flock on its data directory,
+      # which fails on the plain NFSv3 class ("no locks available")
+      storageClassName: nfs-cluster-nolock
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 8Gi
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 100m
+      limits:
+        memory: 1Gi
+
+# --- vmagent: scraping agent ---
+# Auto-scrapes: nodes, annotated pods, apiserver, kubelet, cadvisor
+vmagent:
+  enabled: true
+  spec:
+    resources:
+      requests:
+        memory: 128Mi
+        cpu: 50m
+      limits:
+        memory: 256Mi
+
+# --- Alerting: disabled (enable later with vmalert + alertmanager) ---
+vmalert:
+  enabled: false
+alertmanager:
+  enabled: false
+
+# --- node-exporter: node system metrics ---
+# Exposes CPU, RAM, disk, network per node
+prometheus-node-exporter:
+  enabled: true
+  resources:
+    requests:
+      memory: 32Mi
+      cpu: 20m
+    limits:
+      memory: 64Mi
+
+# --- kube-state-metrics: Kubernetes object state ---
+# Metrics on pods, deployments, PVCs, jobs, etc.
+kube-state-metrics:
+  enabled: true
+  resources:
+    requests:
+      memory: 64Mi
+      cpu: 20m
+    limits:
+      memory: 128Mi
+
+# --- Grafana ---
+grafana:
+  enabled: true
+
+  # Admin credentials: never stored in the repo. Create the Secret before deploying:
+  #   kubectl create secret generic grafana-admin -n monitoring \
+  #     --from-literal=admin-user=admin \
+  #     --from-literal=admin-password='<password>'
+  admin:
+    existingSecret: grafana-admin
+    userKey: admin-user
+    passwordKey: admin-password
+
+  persistence:
+    enabled: true
+    # nolock variant: Grafana's SQLite database needs file locks
+    storageClassName: nfs-cluster-nolock
+    size: 1Gi
+
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: traefik
+    hosts:
+      - grafana.${INTERNAL_DOMAIN}
+
+  # Loki datasource (VictoriaMetrics is added automatically by the chart)
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      url: http://loki.monitoring.svc.cluster.local:3100
+      isDefault: false
+      jsonData:
+        maxLines: 1000
+
+  # Pre-installed dashboards from grafana.com
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: default
+          folder: Kubernetes
+          type: file
+          disableDeletion: false
+          options:
+            path: /var/lib/grafana/dashboards/default
+
+  dashboards:
+    default:
+      # Cluster-wide overview
+      kubernetes-cluster:
+        gnetId: 7249
+        revision: 1
+        datasource: VictoriaMetrics
+      # Detailed per-node metrics (node-exporter full)
+      node-exporter-full:
+        gnetId: 1860
+        revision: 37
+        datasource: VictoriaMetrics
+      # Resource usage broken down by namespace
+      k8s-resources-namespace:
+        gnetId: 13770
+        revision: 1
+        datasource: VictoriaMetrics
+      # Loki log exploration
+      loki-logs:
+        gnetId: 13639
+        revision: 2
+        datasource: Loki
+
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 50m
+    limits:
+      memory: 256Mi

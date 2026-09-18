@@ -7,7 +7,30 @@ metadata:
     kubernetes.io/ingress.class: traefik
 spec:
   rules:
-    - host: immich.cluster
+    - host: immich.${INTERNAL_DOMAIN}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: immich-server
+                port:
+                  number: 2283
+---
+# Access through the public domain (wildcard certificate served by Traefik's default TLSStore)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: immich-ingress-tls
+  namespace: immich
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: immich.${PUBLIC_DOMAIN}
       http:
         paths:
           - path: /

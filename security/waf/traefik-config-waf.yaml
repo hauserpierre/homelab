@@ -1,0 +1,29 @@
+# ------------------------------------------------------------------------------
+# Traefik + Coraza WAF plugin (OWASP Core Rule Set)
+#
+# WARNING: K3s accepts only ONE HelmChartConfig for traefik: this file REPLACES
+#     traefik-config.yaml (at the repo root). It carries over the existing
+#     timeouts and adds the plugin loading.
+#
+# The plugin is downloaded by Traefik at startup (internet access required
+# from the pod). Applying this file restarts Traefik (~30 s of downtime).
+# ------------------------------------------------------------------------------
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    additionalArguments:
+      - "--entryPoints.web.transport.respondingTimeouts.readTimeout=3600s"
+      - "--entryPoints.web.transport.respondingTimeouts.writeTimeout=3600s"
+      - "--entryPoints.web.transport.respondingTimeouts.idleTimeout=3600s"
+      - "--entryPoints.websecure.transport.respondingTimeouts.readTimeout=3600s"
+      - "--entryPoints.websecure.transport.respondingTimeouts.writeTimeout=3600s"
+      - "--entryPoints.websecure.transport.respondingTimeouts.idleTimeout=3600s"
+    experimental:
+      plugins:
+        coraza:
+          moduleName: github.com/jcchavezs/coraza-http-wasm-traefik
+          version: v0.6.0

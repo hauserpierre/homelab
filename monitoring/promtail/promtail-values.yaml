@@ -1,0 +1,35 @@
+# ------------------------------------------------------------------------------
+# Promtail: log collection
+# Helm chart: grafana/promtail
+#
+# Mode: DaemonSet (1 pod per node)
+# Source: container logs via /var/log/pods (mounted from the node)
+# Destination: Loki in the same namespace
+# ARM64 compatible
+# ------------------------------------------------------------------------------
+
+config:
+  clients:
+    - url: http://loki.monitoring.svc.cluster.local:3100/loki/api/v1/push
+
+  snippets:
+    pipelineStages:
+      # Parse the CRI format used by containerd (k3s runtime)
+      - cri: {}
+      # Drop the filename label to keep series cardinality low
+      - labeldrop:
+          - filename
+
+# Tolerate all taints so Promtail runs on every node including the master
+tolerations:
+  - effect: NoSchedule
+    operator: Exists
+  - effect: NoExecute
+    operator: Exists
+
+resources:
+  requests:
+    memory: 64Mi
+    cpu: 20m
+  limits:
+    memory: 128Mi

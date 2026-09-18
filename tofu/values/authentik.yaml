@@ -1,0 +1,82 @@
+# ------------------------------------------------------------------------------
+# Authentik: identity provider (OIDC, SAML, LDAP, auth proxy)
+# Helm chart: goauthentik/authentik
+#
+# Architecture: server (UI + API) + worker (background tasks)
+#               + embedded PostgreSQL and Redis (subcharts)
+# Secrets: via the `authentik-secrets` Secret (created by hand, see tofu/authentik.tf)
+# ARM64 compatible
+# ------------------------------------------------------------------------------
+
+global:
+  # Injects AUTHENTIK_SECRET_KEY and AUTHENTIK_POSTGRESQL__PASSWORD
+  # into the server and the worker.
+  envFrom:
+    - secretRef:
+        name: authentik-secrets
+
+authentik:
+  error_reporting:
+    enabled: false   # no telemetry sent to goauthentik.io
+
+server:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    hosts:
+      - auth.${INTERNAL_DOMAIN}
+
+worker:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+
+# --- Embedded PostgreSQL ---
+postgresql:
+  enabled: true
+  auth:
+    username: authentik
+    database: authentik
+    # The password comes from the same Secret as the application
+    existingSecret: authentik-secrets
+    secretKeys:
+      adminPasswordKey: AUTHENTIK_POSTGRESQL__PASSWORD
+      userPasswordKey: AUTHENTIK_POSTGRESQL__PASSWORD
+  primary:
+    persistence:
+      enabled: true
+      storageClass: nfs-cluster
+      size: 5Gi
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
+
+# --- Embedded Redis (cache + task queues) ---
+redis:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: false   # only reachable from within the namespace
+  master:
+    persistence:
+      enabled: false   # cache only, nothing to persist
+    resources:
+      requests:
+        cpu: 20m
+        memory: 64Mi
+      limits:
+        memory: 256Mi

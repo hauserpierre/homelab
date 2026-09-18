@@ -2,7 +2,7 @@
 
 set -e
 
-# Configuration — edit these values to match your cluster
+# Configuration: edit these values to match your cluster
 WORKER_NODES=("worker01" "worker02" "worker03")
 CLUSTER_USER="${USER}"
 STATE_DIR="$HOME/cluster-state"

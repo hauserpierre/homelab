@@ -1,0 +1,38 @@
+# ------------------------------------------------------------------------------
+# Teleport: access bastion (SSH, kubectl) with session recording
+# Helm chart: teleport/teleport-cluster
+#
+# Mode: standalone (1 auth replica + 1 proxy), local SQLite backend
+# Exposure: Traefik TLS passthrough on the teleport.${INTERNAL_DOMAIN} SNI
+#           (see tofu/manifests/teleport-ingressroutetcp.yaml)
+# ARM64 compatible
+# ------------------------------------------------------------------------------
+
+clusterName: teleport.${INTERNAL_DOMAIN}
+
+# All traffic (web UI, SSH tunnels, kube) is multiplexed on port 443,
+# which is required behind a single Traefik entry point.
+proxyListenerMode: multiplex
+
+# Traefik routes to the service internally: no LoadBalancer needed
+# (and port 443 on the nodes is already taken by Traefik).
+service:
+  type: ClusterIP
+
+# Storage for the Teleport cluster state and the session recordings.
+# SQLite on NFS causes locking issues, so this stays on local-path (the
+# default class). The auth pod is therefore pinned to the node hosting the
+# PV, which is an acceptable trade-off for a homelab.
+persistence:
+  enabled: true
+  volumeSize: 5Gi
+
+log:
+  level: INFO
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 1Gi

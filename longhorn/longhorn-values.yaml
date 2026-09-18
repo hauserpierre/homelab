@@ -1,0 +1,5 @@
+defaultSettings:
+  defaultDataPath: /media/DATA
+
+persistence:
+  defaultClassReplicaCount: 2

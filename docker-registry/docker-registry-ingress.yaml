@@ -10,10 +10,34 @@ metadata:
 spec:
   tls:
     - hosts:
-        - registry.cluster
+        - registry.${INTERNAL_DOMAIN}
       secretName: registry-tls
   rules:
-    - host: registry.cluster
+    - host: registry.${INTERNAL_DOMAIN}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: registry
+                port:
+                  number: 5000
+---
+# Access through the public domain (wildcard certificate served by Traefik's default TLSStore)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: registry-ingress-tls
+  namespace: registry
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.middlewares: registry-registry-headers@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: registry.${PUBLIC_DOMAIN}
       http:
         paths:
           - path: /

@@ -20,7 +20,7 @@ spec:
         - containerPort: 22300
         env:
         - name: APP_BASE_URL
-          value: "http://<NODE_IP>:32230" # replace with one of your node IPs
+          value: "http://${NODE_IP}:32230" # replace with one of your node IPs
         - name: DB_CLIENT
           value: pg
         - name: POSTGRES_HOST

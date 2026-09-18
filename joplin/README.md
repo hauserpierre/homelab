@@ -33,5 +33,5 @@ kubectl apply -f 05-joplin-ingress.yaml
 
 ## Configuration
 
-- Set `APP_BASE_URL` in `03-joplin-deployment-server.yaml` to the URL clients will use to reach the server (e.g. `http://<NODE_IP>:<NODE_PORT>`).
+- Set `APP_BASE_URL` in `03-joplin-deployment-server.yaml` to the URL clients will use to reach the server (e.g. `http://${NODE_IP}:<NODE_PORT>`).
 - Storage: Longhorn PVC (10 Gi by default).

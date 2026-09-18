@@ -1,10 +1,22 @@
 replicaCount: 1
 
+deployment:
+  env:
+    - name: GITEA__DATABASE__PASSWD
+      valueFrom:
+        secretKeyRef:
+          name: gitea-postgres-secret
+          key: password
+
 image:
-  tag: 1.22     # ARM-compatible
+  tag: 1.26
 
 service:
   http:
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "3000"
+      prometheus.io/path: "/metrics"
     type: ClusterIP
     port: 3000
   ssh:
@@ -15,7 +27,7 @@ ingress:
   enabled: true
   className: traefik
   hosts:
-    - host: gitea.cluster
+    - host: gitea.${INTERNAL_DOMAIN}
       paths:
         - path: /
           pathType: Prefix
@@ -23,13 +35,16 @@ ingress:
 
 persistence:
   enabled: true
-  size: 20Gi
-  storageClass: "longhorn"
+  size: 8Gi
+  storageClass: "nfs-cluster"
 
 valkey-cluster:
   enabled: false
 valkey:
   enabled: true
+  primary:
+    persistence:
+      size: 2Gi
 postgresql:
   enabled: true
   auth:
@@ -45,8 +60,14 @@ gitea:
   admin:
     existingSecret: gitea-admin-secret
   config:
+    metrics:
+      ENABLED: true
     database:
       DB_TYPE: postgres
     indexer:
-      ISSUE_INDEXER_TYPE: bleve
+      # bleve (boltdb) needs file locks, which are unavailable on the NFS PVC
+      # ("no locks available") -> issues indexed in the database, code index kept off NFS
+      ISSUE_INDEXER_TYPE: db
       REPO_INDEXER_ENABLED: true
+      REPO_INDEXER_PATH: /tmp/gitea/indexers/repos.bleve
+      STARTUP_TIMEOUT: 30m

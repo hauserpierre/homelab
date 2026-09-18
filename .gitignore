@@ -1,34 +1,30 @@
-HELP.md
-target/
-!.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**
-!**/src/test/**
-out/
-
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-
-### VS Code ###
+# IDE / tooling
+.idea/
 .vscode/
+.claude/
+CLAUDE.md
 
-*.map
+# Secrets: never commit real values. Only *-secret.yaml files containing
+# <CHANGE_ME> placeholders are tracked; keep real ones as *.local.yaml
+*.local.yaml
+*.local.env
+.env
+cluster.env
+**/auth
+**/htpasswd
+*token*.txt
+*.key
+*.pem
+*.crt
+kubeconfig*
+
+# OpenTofu / Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+
+# doc
+docs/

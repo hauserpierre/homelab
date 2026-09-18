@@ -59,7 +59,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: longhorn
+  storageClassName: nfs-cluster
   resources:
     requests:
-      storage: 10Gi
+      storage: 5Gi

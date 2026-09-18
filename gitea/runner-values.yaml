@@ -37,7 +37,7 @@ statefulset:
     pullPolicy: IfNotPresent
 
     extraVolumeMounts:
-      # ✅ Use host container runtime socket
+      # Use host container runtime socket
       - name: containerd-sock
         mountPath: /run/containerd/containerd.sock
 

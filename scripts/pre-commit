@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Blocks commits containing secrets or personal config.
+# Install: ln -sf ../../scripts/pre-commit .git/hooks/pre-commit
+# Personal patterns (domain, email, passwords...) go in .git/info/secret-patterns
+# (one regex per line). That file lives outside the tree and is never pushed.
+set -uo pipefail
+fail=0
+files=$(git diff --cached --name-only --diff-filter=ACM)
+[ -z "$files" ] && exit 0
+
+# 1. forbidden file names
+bad=$(echo "$files" | grep -E '(\.local\.ya?ml|\.tfstate|\.tfvars|token.*\.txt|/auth|htpasswd|\.pem|\.key|cluster\.env)$' | grep -v '\.example$')
+[ -n "$bad" ] && { echo "ERROR: forbidden files staged:"; echo "$bad"; fail=1; }
+
+# 2. Secret manifests must only hold placeholders
+for f in $(echo "$files" | grep -E 'secret.*\.ya?ml$'); do
+  git show ":$f" | grep -nE '^\s+[A-Za-z_-]*(password|passwd|token|key|username|email)[A-Za-z_-]*:\s*\S' \
+    | grep -vE '<[A-Z_]+>|\{\{' && { echo "ERROR: $f: real value instead of <CHANGE_ME>"; fail=1; }
+done
+
+# 3. generic + personal patterns on added lines
+pat='BEGIN [A-Z ]*PRIVATE KEY|192\.168\.[0-9]+\.[0-9]+[^/0-9]|[A-Za-z0-9._%+-]+@(gmail|outlook|proton)'
+[ -f .git/info/secret-patterns ] && pat="$pat|$(grep -v '^\s*$' .git/info/secret-patterns | paste -sd'|')"
+hits=$(git diff --cached -U0 -- . ':!scripts/pre-commit' | grep -E '^\+[^+]' | grep -nE "$pat")
+[ -n "$hits" ] && { echo "ERROR: sensitive pattern in added lines:"; echo "$hits" | cut -c1-160; fail=1; }
+
+command -v gitleaks >/dev/null && { gitleaks protect --staged --no-banner -q || fail=1; }
+[ $fail -ne 0 ] && { echo; echo "Commit blocked. Use placeholders / cluster.env / *.local.yaml (see README)."; exit 1; }
+exit 0

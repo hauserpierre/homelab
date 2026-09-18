@@ -4,9 +4,9 @@ StorageClass definitions for the cluster.
 
 ## Contents
 
-- `nfs-storage-class.yaml` — NFS-backed StorageClass using the NFS subdir external provisioner
-- `nfs-cluster-storage-class.yaml` — Cluster-scoped variant of the NFS StorageClass
-- `test-pvc.yaml` — PVC for testing storage provisioning
+- `nfs-storage-class.yaml`: NFS-backed StorageClass using the NFS subdir external provisioner
+- `nfs-cluster-storage-class.yaml`: Cluster-scoped variant of the NFS StorageClass
+- `test-pvc.yaml`: PVC for testing storage provisioning
 
 ## Install the NFS Provisioner
 

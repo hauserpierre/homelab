@@ -17,7 +17,7 @@ spec:
         kubernetes.io/arch: arm64
       containers:
         - name: act-runner
-          image: 192.168.1.17:30000/act-runner-arm64:latest
+          image: ${NODE_IP}:30000/act-runner-arm64:latest
           imagePullPolicy: Always
           env:
             - name: GITEA_INSTANCE_URL

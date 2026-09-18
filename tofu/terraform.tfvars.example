@@ -1,0 +1,10 @@
+# Copy to terraform.tfvars (gitignored) and enable the deployed layers,
+# so the -var flags do not have to be passed on every apply.
+deploy_monitoring = false
+deploy_authentik  = false
+deploy_teleport   = false
+
+internal_domain = "cluster"
+public_domain   = "cluster.example.com"
+node_ip         = "192.168.x.x"
+nfs_server_ip   = "192.168.x.x"

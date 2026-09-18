@@ -9,7 +9,7 @@ joplin:
 
 
   env:
-    APP_BASE_URL: "http://<NODE_IP>:32230" # replace with one of your node IPs
+    APP_BASE_URL: "http://${NODE_IP}:32230" # replace with one of your node IPs
     DB_CLIENT: pg
     DB_HOST: joplin-postgres
     DB_PORT: 5432
@@ -38,7 +38,7 @@ postgres:
 
   persistence:
     enabled: true
-    storageClass: "longhorn"
+    storageClass: "nfs-cluster"
   accessModes:
     - ReadWriteOnce
   size: 10Gi

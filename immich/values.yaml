@@ -16,10 +16,12 @@ server:
                 secretKeyRef:
                   name: immich-secret
                   key: db-password
-            IMMICH_MACHINE_LEARNING_ENABLED: false
 
 valkey:
   enabled: true
+
+machine-learning:
+  enabled: false
 
 immich:
   persistence:

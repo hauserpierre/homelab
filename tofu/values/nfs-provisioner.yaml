@@ -1,0 +1,9 @@
+# Values for the nfs-provisioner release (kube-system), extracted from the cluster.
+# Provisions dynamic PVs on the NAS NFS share.
+nfs:
+  server: ${NFS_SERVER_IP}
+  path: /media/DATA
+
+storageClass:
+  name: nfs-cluster
+  defaultClass: false

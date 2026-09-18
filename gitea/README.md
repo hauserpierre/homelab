@@ -8,7 +8,7 @@ kubectl create namespace gitea
 kubectl create secret generic gitea-admin-secret \
   --from-literal=username=<YOUR_ADMIN_USERNAME> \
   --from-literal=password=<YOUR_SECURE_PASSWORD> \
-  --from-literal=email=<YOUR_EMAIL> \
+  --from-literal=email=${ACME_EMAIL} \
   -n gitea
 
 kubectl create secret generic gitea-postgres-secret \
@@ -27,7 +27,7 @@ kubectl get pods -n gitea
 
 ## Add to /etc/hosts
 
-<NODE_IP>  gitea.cluster
+${NODE_IP}  gitea.${INTERNAL_DOMAIN}
 
 ## Install Gitea Actions Runner (CI/CD)
 
@@ -52,7 +52,7 @@ kubectl get pods -n gitea
 Inside any repo on Gitea, create:
 .gitea/workflows/ci.yaml
 
-Push to main → CI should start!
+Push to main -> CI should start!
 
 Check:
-Gitea → Repo → Actions
+Gitea -> Repo -> Actions
